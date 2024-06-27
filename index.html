@@ -4,8 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculator project</title>
+    <link rel = "stylesheet", href = "style.css">
+    <script src = "script.js" defer></script>
 </head>
 <body>
-    
+    <div class = "calc-container">
+        <div class = "display">0</div>
+        <div class = "digit-container">
+            <button id = "zero" class = "digit">0</button>
+            <button id = "one" class = "digit">1</button>
+            <button id = "two" class = "digit">2</button>
+            <button id = "three" class = "digit">3</button>
+            <button id = "four" class = "digit">4</button>
+            <button id = "five" class = "digit">5</button>
+            <button id = "six" class = "digit">6</button>
+            <button id = "seven" class = "digit">7</button>
+            <button id = "eight" class = "digit">8</button>
+            <button id = "nine" class = "digit">9</button>
+        </div>
+        <div class = "operator-container">
+            <button id = "addition" class = "operator">+</button>
+            <button id = "subtraction" class = "operator">-</button>
+            <button id = "multiplication" class = "operator">*</button>
+            <button id = "division" class = "operator">/</button>
+        </div>
+        <div class = "etc-container">
+            <button id = "equal" class = "result">=</button>
+            <button id = "clear" class = "reset">AC</button>
+        </div>
+    </div>
 </body>
 </html>
