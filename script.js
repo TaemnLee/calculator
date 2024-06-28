@@ -10,6 +10,10 @@ let op1 = '';
 let operator = '';
 let op2 = '';
 
+// variable to check the specific sequence of the calculator 
+// sequence: digit -> = -> digit || digit -> = -> operator -> digit
+let eql = '';
+
 //==================================================================
 // add, subtract, multiply, and divide
 //
@@ -61,15 +65,19 @@ const oprBtn = document.querySelectorAll(".operator");
 // Return: none (displays operands)
 //==================================================================
 
-function handleDigits(digits){
+function handleDigits(digits, eql){
     // displays the digit I clicked instead of the default display
-    if (display.textContent == "0"){
-        display.textContent = digits;
-    } 
+    if (display.textContent === "0" && digits === "0"){
+        return;
+    }
 
     // if operator exists, we take the digit to op1
     // O/w, we take the digit to op2
-    if (operator === ''){
+    if (eql === '' && operator === ''){
+        op1 += digits;
+        display.textContent = op1;
+    } else if (op1 !== '' && eql !== '' && operator === '') {
+        op1 = '';
         op1 += digits;
         display.textContent = op1;
     } else {
@@ -80,7 +88,7 @@ function handleDigits(digits){
 
 digitBtn.forEach(button => {
     button.addEventListener("click", () => 
-        handleDigits(button.textContent)
+        handleDigits(button.textContent, eql)
     );
 });
 
@@ -161,6 +169,7 @@ clearBtn.addEventListener("click", () => {
     op1 = '';
     op2 = '';
     operator = '';
+    eql = '';
     display.textContent = "0";
 });
 
@@ -175,5 +184,18 @@ clearBtn.addEventListener("click", () => {
 const resultBtn = document.querySelector(".result");
 
 resultBtn.addEventListener("click", () => {
-    display.textContent = operate(op1, op2, operator);
+    // if result button is clicked without the second operand, 
+    // implement the function byitself
+    if (op1 !== '' && operator !== '' && op2 === '') {
+        op2 = op1;
+        op1 = operate(op1, op2, operator);
+        display.textContent = op1;
+        op2 = '';
+        operator = '';
+    } else if (op1 !== '' && operator === '' && op2 === ''){
+        eql = op1;
+        display.textContent = eql;
+    } else {
+        display.textContent = operate(op1, op2, operator);
+    }
 });
