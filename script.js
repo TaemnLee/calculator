@@ -13,7 +13,9 @@ let op2 = '';
 // variable to check the specific sequence of the calculator 
 // sequence: digit -> = -> digit || digit -> = -> operator -> digit
 let eql = '';
+let lastAction = '';
 
+const percentDenom = 100;
 //==================================================================
 // add, subtract, multiply, and divide
 //
@@ -53,6 +55,28 @@ const digitBtn = document.querySelectorAll(".digit");
 const oprBtn = document.querySelectorAll(".operator");
 
 //==================================================================
+// updateDisplay
+// 
+// This function displays the current input of the calculator accordingly
+// 
+// Parameter: value
+// Return: - none (updates the display)
+//==================================================================
+
+function updateDisplay (value) {
+    if (typeof value === 'number') {
+        value = value.toString();
+    }
+
+    if (value.length > 9) {
+        // Truncate to 9 digits
+        display.textContent = value.slice(0, 9);
+    } else {
+        display.textContent = value;
+    }
+}
+
+//==================================================================
 // handleDigits & eventListener (Digit)
 //
 // This function stores the digits that are clicked and store them 
@@ -65,31 +89,191 @@ const oprBtn = document.querySelectorAll(".operator");
 // Return: none (displays operands)
 //==================================================================
 
-function handleDigits(digits, eql){
-    // displays the digit I clicked instead of the default display
-    if (display.textContent === "0" && digits === "0"){
+function handleDigits(digits, eql) {
+    // Keep the default display when only 0s are clicked
+    if (display.textContent === "0" && digits === "0") {
         return;
     }
-
-    // if operator exists, we take the digit to op1
-    // O/w, we take the digit to op2
-    if (eql === '' && operator === ''){
-        op1 += digits;
-        display.textContent = op1;
-    } else if (op1 !== '' && eql !== '' && operator === '') {
-        op1 = '';
-        op1 += digits;
-        display.textContent = op1;
+    deleteBtn.disabled = false;
+    // When only digits are clicked
+    if (eql === '' && operator === '' && (lastAction === '' || lastAction === 'dec' || lastAction === 'digit')) {
+        if (op1 === '0' && digits !== '.') {
+            op1 = digits; // Replace leading zero
+        } else {
+            op1 += digits;
+        }
+        updateDisplay(op1);
+    // When digits are clicked if only operand1 and eql exist
+    // Sequence: op1 -> =
+    } else if (op1 !== '' && operator === '' && lastAction === "equal") {
+        op1 = digits; // Start new number after equal
+        updateDisplay(op1);
+    // When digits are clicked after equal
+    // Sequence: op1 -> opr -> op2 -> =
+    } else if (op1 !== '' && operator !== '' && lastAction === "equal") {
+        op1 = digits; // Start new number after equal
+        updateDisplay(op1);
+    // Sequence: op1 && operator -> dec -> 
+    } else if (op1 !== '' && operator !== '' && lastAction === "dec") {
+        if (op2 === '0' && digits !== '.') {
+            op2 = digits; // Replace leading zero
+        } else {
+            op2 += digits;
+        }
+        updateDisplay(op2);
+    // Sequence = -> dec -> 
+    } else if (op1 === '' && operator !== '' && lastAction === "dec") {
+        if (op1 === '0' && digits !== '.') {
+            op1 = digits; // Replace leading zero
+        } else {
+            op1 += digits;
+        }
+        updateDisplay(op1);
+    // When digits are clicked if only operator exists
+    } else if (op1 === '' && operator !== '') {
+        if (op1 === '0' && digits !== '.') {
+            op1 = digits; // Replace leading zero
+        } else {
+            op1 += digits;
+        }
+        updateDisplay(op1);
+    // When digits are clicked if only operand1 and operator exist
     } else {
-        op2 += digits;
-        display.textContent = op2;
+        if (op2 === '0' && digits !== '.') {
+            op2 = digits; // Replace leading zero
+        } else {
+            op2 += digits;
+        }
+        updateDisplay(op2);
     }
+    lastAction = "digit";
 }
 
 digitBtn.forEach(button => {
     button.addEventListener("click", () => 
         handleDigits(button.textContent, eql)
     );
+});
+
+//==================================================================
+// eventListener (percentage)
+//
+// This function divides the operands by 100 to represent the percentage.
+//
+// Parameter: none
+// Return: -float
+//==================================================================
+
+const percentBtn = document.querySelector(".pcnt");
+
+percentBtn.addEventListener("click", () => {
+    if (op2 === '') {
+        op1 = op1/percentDenom;
+        updateDisplay(parseFloat(op1));
+    } else {
+        op2 = op2/percentDenom;
+        updateDisplay(parseFloat(op2));
+    }
+    lastAction = "dec";
+    decBtn.disabled = display.textContent.includes('.');
+});
+
+//==================================================================
+// eventListener (+/-)
+//
+// This function changes the sign of the operands
+//
+// Parameter: none
+// Return: - int/float
+//==================================================================
+
+const unsignedBtn = document.querySelector(".plusMin");
+
+unsignedBtn.addEventListener("click", () => {
+    if (op2 === '') {
+        op1 = -op1;
+        updateDisplay(parseFloat(op1));
+    } else {
+        op2 = -op2;
+        updateDisplay(parseFloat(op2));
+    }
+});
+
+//==================================================================
+// eventListener (delete)
+//
+// This function deletes the last digit of the current operand.
+// If the last digit is deleted, it returns the default display ("0")
+//
+// Parameter: none
+// Return: - string
+//==================================================================
+
+const deleteBtn = document.querySelector(".remove");
+
+deleteBtn.addEventListener("click", () => {
+    if (op2 === '') {
+        op1 = op1.slice(0, -1);
+        if (op1 === '') {
+            updateDisplay("0");
+            deleteBtn.disabled = display.textContent.includes('0');
+        } else {
+            updateDisplay(parseFloat(op1));
+        }
+    } else {
+        op2 = op2.slice(0, -1);
+        if (op2 === '') {
+            updateDisplay("0");
+            deleteBtn.disabled = display.textContent.includes('0');
+        } else {
+            updateDisplay(parseFloat(op2));
+        }
+    }
+});
+
+//==================================================================
+// eventListener (.)
+//
+// This function converts the current operand to decimal value
+//
+// Parameter: none
+// Return: - float
+//==================================================================
+
+const decBtn = document.querySelector(".decimals");
+
+decBtn.addEventListener("click", () => {
+    // Append decimal point based on the lastAction
+    if (lastAction === 'digit') {
+        if (op2 === '') {
+            op1 += '.';
+            updateDisplay(op1);
+        } else {
+            op2 += '.';
+            updateDisplay(op2);
+        }
+    } else if (lastAction === 'operator' || lastAction === 'equal' || lastAction === '') {
+        // Default to '0.' for op1 if starting fresh or after an operator or equals
+        if (op1 === '' || lastAction === '') {
+            op1 = '0.';
+            updateDisplay(op1);
+        }
+        // Default to '0.' for op1 after an equal
+        else if (op2 === '' && operator === '' && lastAction === 'equal') {
+            op1 = '0.';
+            updateDisplay(op1);
+        }
+        // Default to '0.' for op2 after an operator
+        else if (op2 === '' && operator !== '' && lastAction === 'operator') {
+            op2 = '0.';
+            updateDisplay(op2);
+        }
+    } 
+
+    // Update lastAction to 'digit' because a decimal point is a numeric input
+    lastAction = 'dec';
+    // Disable the decimal button if there's already one in the display
+    decBtn.disabled = display.textContent.includes('.');
 });
 
 //==================================================================
@@ -106,15 +290,34 @@ digitBtn.forEach(button => {
 
 oprBtn.forEach(button => {
     button.addEventListener("click", (event) => {
-        if (op2 != ''){
+        // when operator is clicked if op1, operator, and op2 exists
+        if (op1 !== '' && operator !== '' && op2 !== ''){
             // update the global variables and display op1 (result)
             op1 = operate(op1, op2, operator);
-            display.textContent = op1;
+            updateDisplay(op1);
             op2 = '';
             operator = '';
+        // when operator is clicked only if op1 and operator exists AND sequence: opr -> digit
+        } else if (op1 !== '' && operator !== '' && op2 === '' && lastAction === "digit") {
+            switch (operator) {
+                case '+':
+                    // op1 remains the same
+                    break;
+                case '-':
+                    op1 = -parseFloat(op1); // Change to the opposite sign
+                    updateDisplay(op1);
+                    break;
+                case '*':
+                case '/':
+                    op1 = '0'; // Result should be 0
+                    updateDisplay(op1);
+                    break;
+            }
         }
         // store the operator (string)
         operator = event.target.textContent;
+        lastAction = "operator";
+        decBtn.disabled = false;
     });
 });
 
@@ -136,8 +339,8 @@ oprBtn.forEach(button => {
 
 function operate(op1, op2, operator){
     // convert the text to integer
-    op1 = parseInt(op1);
-    op2 = parseInt(op2);
+    op1 = parseFloat(op1);
+    op2 = parseFloat(op2);
 
     // implements the calculation
     if (operator === "+"){
@@ -151,7 +354,7 @@ function operate(op1, op2, operator){
     }
 
     // return the result
-    return op1;
+    return parseFloat(op1.toPrecision(9));
 };
 
 //==================================================================
@@ -170,7 +373,9 @@ clearBtn.addEventListener("click", () => {
     op2 = '';
     operator = '';
     eql = '';
-    display.textContent = "0";
+    decBtn.disabled = false;
+    lastAction = '';
+    updateDisplay("0");
 });
 
 //==================================================================
@@ -184,18 +389,42 @@ clearBtn.addEventListener("click", () => {
 const resultBtn = document.querySelector(".result");
 
 resultBtn.addEventListener("click", () => {
-    // if result button is clicked without the second operand, 
-    // implement the function byitself
+    // when = is clicked if only op1 and operator exists
     if (op1 !== '' && operator !== '' && op2 === '') {
-        op2 = op1;
-        op1 = operate(op1, op2, operator);
-        display.textContent = op1;
+        // Digit -> operator sequence
+        if (lastAction === "digit"){
+            switch (operator) {
+                case '+':
+                    // op1 remains the same
+                    break;
+                case '-':
+                    op1 = -parseFloat(op1); // Change to the opposite sign
+                    updateDisplay(op1);
+                    break;
+                case '*':
+                case '/':
+                    op1 = '0'; // Result should be 0
+                    updateDisplay(op1);
+                    break;
+            }
+        } else if (lastAction === "operator"){ // operator -> digit
+            op2 = op1;
+            op1 = operate(op1, op2, operator);
+            updateDisplay(op1);
+            op2 = '';
+            operator = '';
+        } 
+
+    } // Sequence: op1 -> = 
+    else if (op1 !== '' && operator === '' && op2 === ''){
+        eql = op1;
+        updateDisplay(eql);
+    } else {
+        op1 = operate(op1, op2, operator)
+        updateDisplay(op1);
         op2 = '';
         operator = '';
-    } else if (op1 !== '' && operator === '' && op2 === ''){
-        eql = op1;
-        display.textContent = eql;
-    } else {
-        display.textContent = operate(op1, op2, operator);
     }
+    decBtn.disabled = false;
+    lastAction = "equal";
 });
